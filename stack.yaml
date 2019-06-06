@@ -1,0 +1,11 @@
+resolver: lts-12.14
+
+ghc-build: alpine
+
+extra-deps:
+- Agda-2.6.0.1
+
+# Local packages, usually specified by relative directory name
+packages:
+- 'src/src/fix-agda-whitespace'
+- 'src/src/size-solver'
