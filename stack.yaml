@@ -3,9 +3,11 @@ resolver: lts-12.14
 ghc-build: alpine
 
 extra-deps:
-- Agda-2.6.0.1
+- filepath-1.4.2.1
+- filemanip-0.3.6.3
 
 # Local packages, usually specified by relative directory name
 packages:
+- 'src'
 - 'src/src/fix-agda-whitespace'
 - 'src/src/size-solver'

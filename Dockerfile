@@ -1,4 +1,8 @@
 FROM alpine:3.9.4
+# Adapted from:
+# https://github.com/ajhamwood/idris-alpine
+# https://github.com/JLimperg/docker-agda-stdlib
+# https://hub.docker.com/r/qualified/agda
 
 MAINTAINER Aidan Hamwood <ajh@tuta.io>
 
@@ -6,8 +10,8 @@ MAINTAINER Aidan Hamwood <ajh@tuta.io>
 # Part 1: Haskell
 
 RUN apk update && \
-    apk add --no-cache --update --virtual .build-deps cabal ghc ghc-dev libffi-dev ncurses-dev zlib-dev && \
-    apk add --no-cache --update build-base git gmp-dev gcc perl-utils wget xz
+    apk add --no-cache --update --virtual .build-deps libffi-dev ncurses-dev alpine-sdk musl-dev zlib-dev ghc cabal && \
+    apk add --no-cache --update libffi ncurses gmp-dev
 
 ENV PATH "/root/.local/bin:${PATH}"
 
@@ -17,24 +21,28 @@ RUN wget -qO- https://get.haskellstack.org/ | sh
 # Part 2: Agda
 # Adapted from https://github.com/JLimperg/docker-agda-stdlib
 
-COPY stack.yaml libraries /root/.agda/
+COPY stack.yaml libraries defaults /root/.agda/
 
-RUN git clone --depth 1 -b v2.6.0.1 https://github.com/agda/agda.git /root/.agda/src
-RUN mkdir -p /root/.agda/lib && \
-    git clone --depth 1 -b v1.0.1 https://github.com/agda/agda-stdlib.git /root/.agda/lib/standard-library
+RUN git clone --depth 1 -b v2.6.0.1 https://github.com/agda/agda.git /root/.agda/src && \
+    mkdir -p /root/.agda/lib && \
+    git clone --depth 1 -b v1.0.1 https://github.com/agda/agda-stdlib.git /root/.agda/lib/standard-library && \
+    git clone https://github.com/agda/cubical /root/.agda/lib/cubical
 
-RUN stack --system-ghc --stack-yaml /root/.agda/stack.yaml install && \
-    stack --system-ghc --stack-yaml /root/.agda/stack.yaml clean
+RUN cd /root/.agda && \
+    stack --system-ghc install && \
+    stack --system-ghc clean
 
 RUN cd /root/.agda/lib/standard-library && \
-    stack --resolver lts-12.14 script --package filemanip --package filepath --system-ghc -- GenerateEverything.hs && \
+    stack --system-ghc --resolver lts-12.14 script -- GenerateEverything.hs && \
     mv Everything.agda src/ && \
     agda --verbose=0 src/Everything.agda && \
-    rm -rf /root/.stack/build-plan /root/.stack/build-plan-cache /root/.stack/indices /root/.stack/loaded-snapshot-cache /root/.stack/setup-exe-cache /root/.stack/setup-exe-src
+    cd ../cubical/ && git checkout b1fddc15 && make && \
+    cd /root/.stack && rm -rf build-plan build-plan-cache indices loaded-snapshot-cache setup-exe-cache setup-exe-src
 
 
 # Part 3: Cleanup
 
 RUN apk del .build-deps
 
-CMD agda
+RUN mkdir /home/user
+WORKDIR /home/user
