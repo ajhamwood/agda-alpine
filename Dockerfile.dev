@@ -10,8 +10,8 @@ MAINTAINER Aidan Hamwood <ajh@tuta.io>
 # Part 1: Haskell
 
 RUN apk update && \
-    apk add --no-cache --update --virtual .build-deps libffi-dev ncurses-dev alpine-sdk musl-dev zlib-dev ghc-dev cabal && \
-    apk add --no-cache --update libffi ncurses gmp-dev ghc
+    apk add --no-cache --update --virtual .build-deps libffi-dev ncurses-dev alpine-sdk zlib-dev && \
+    apk add --no-cache --update libffi ncurses musl-dev gmp-dev ghc ghc-dev cabal
 
 ENV PATH "/root/.local/bin:${PATH}"
 
